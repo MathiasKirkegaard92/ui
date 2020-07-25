@@ -14,10 +14,11 @@ module.exports = {
         }],
         loaders: [{
             test: /\.js$/,
-            exclude: /node_modules/,
+            // exclude: /node_modules/,
             loader: 'babel-loader'
         }]
     },
+    target: "web",
     resolve: {
         extensions: ['', '.js']
     },
@@ -58,6 +59,6 @@ module.exports = {
         'indent': 4,
         'devel': true,
         'noempty': true,
-        'maxlen': 0
+        'maxlen': 10
     }
 };
