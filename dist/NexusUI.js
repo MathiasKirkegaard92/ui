@@ -7233,7 +7233,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.yMin = 0;
 	    this.yMax = 1;
 	    this.pMin = point.pMin | 0.001;
-	    // this.pMax = point.pMax | 1;
+	    // this.pMax = point.pMax | 10;
 	    this.pMax = 10;
 
 	    this.envelope = envelope;
@@ -7590,32 +7590,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    this.selected = selected.index;
 	                    this.selectedType = selected.type;
 	                    var node = this.nodes[this.selected];
-	                    if (this.selectedType == "line") {
-	                        this.nodes[this.selected].setCurve(1);
-	                    } else if (this.selectedType == "node") {
-	                        this.nodes[this.selected].move(null, 0.5);
+	                    switch (this.selectedType) {
+	                        case "node":
+	                            // reset point
+	                            this.nodes[this.selected].move(null, 0.5);
+	                            this.nodes[this.selected].setCurve(1);
+	                        case "line":
+	                            // Create new node
+	                            this.selectedType = "node";
+	                            var index = this.addPoint(this.mouse.x / this.width, 1 - this.mouse.y / this.height);
+	                            this.hasMoved = true;
+	                            this.selected = index;
 	                    }
 	                } else {
-	                    // Create new node
-	                    if (this.settings.noNewPoints || this.nodes.length + 1 > this.maxPoints) {
-	                        console.log("Can't add more points. \nNPoints: " + this.nodes.length + " maxPoints: " + this.maxPoints);
-	                    } else {
-	                        this.selected = this.getIndexFromX(this.mouse.x / this.width);
-	                        this.selectedType = "node";
-	                        this.nodes.splice(this.selected, 0, new Point({
-	                            x: this.mouse.x / this.width,
-	                            y: 1 - this.mouse.y / this.height,
-	                            p: 1
-	                        }, this));
-	                        this.hasMoved = true;
-	                        console.log("new point");
-	                        this.scaleNode(this.selected);
-	                        this.calculatePoints();
-	                        this.emit("change", this.points);
-	                        this.render();
-	                        this.selected = null;
-	                        this.selectedType = null;
-	                    }
+	                    // Todo: insert loop-point
+	                    this.selectedType = "node";
+	                    var index = this.addPoint(this.mouse.x / this.width, 1 - this.mouse.y / this.height);
+	                    this.hasMoved = true;
+	                    this.selected = index;
 	                }
 	            }
 	        },
@@ -7648,13 +7640,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	        release: {
 	            value: function release() {
 	                if (this.selected != null) {
-	                    if (!this.hasMoved && this.selectedType == "node") {
-	                        if (this.selected + 1 < this.nodes.length) {
-	                            this.nodes[this.selected + 1].setCurve(1);
+	                    if (!this.hasMoved) {
+	                        switch (this.selectedType) {
+	                            case "node":
+	                                // Remove node from envelope
+	                                if (this.selected + 1 < this.nodes.length) {
+	                                    this.nodes[this.selected + 1].setCurve(1);
+	                                }
+	                                this.nodes[this.selected].destroy();
+	                                console.log(this.selected);
+	                            case "line":
+	                                // Reset curve
+	                                this.nodes[this.selected].setCurve(1);
 	                        }
-	                        this.nodes[this.selected].destroy();
-	                        console.log(this.selected);
 	                    }
+
 	                    this.calculatePoints();
 	                    console.log(this.points);
 	                    this.emit("change", this.points);
@@ -7790,17 +7790,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            */
 
 	            value: function addPoint(x, y) {
-	                var index = this.nodes.length;
-	                console.log("NPoints: " + this.nodes.length + " maxPoints: " + this.maxPoints);
-	                if (index < this.maxPoints) {
+	                if (this.settings.noNewPoints || this.nodes.length + 1 > this.maxPoints) {
+	                    console.log("Can't add more points. \nNPoints: " + this.nodes.length + " maxPoints: " + this.maxPoints);
+	                    return null;
+	                } else {
+	                    var index = this.getIndexFromX(x);
 	                    this.sortPoints();
-
-	                    for (var i = 0; i < this.nodes.length; i++) {
-	                        if (x < this.nodes[i].x) {
-	                            index = i;
-	                            break;
-	                        }
-	                    }
 
 	                    this.nodes.splice(index, 0, new Point({
 	                        x: x,
@@ -7809,11 +7804,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    }, this));
 
 	                    this.scaleNode(index);
-
 	                    this.calculatePoints();
 	                    this.emit("change", this.points);
-
 	                    this.render();
+	                    return index;
 	                }
 	            }
 	        },
