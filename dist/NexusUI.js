@@ -7429,6 +7429,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        this.maxPoints = this.settings.maxPoints;
 
+	        this.showAxis = this.setting.showAxis;
+	        console.log("show axis = " + this.showAxis);
+
 	        this.nodes = [];
 
 	        this.selected = false;
@@ -7557,7 +7560,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	                // fill xAxis
 	                //  TODO: move to buildInterface() so its only called onces
-	                if (this.showXAxis) {
+	                if (this.showAxis) {
 	                    this.drawAxis();
 	                }
 	            }
