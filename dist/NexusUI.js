@@ -7317,7 +7317,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	};
 
-	var displayPoint = function displayPoint(point, envelope) {
+	var DisplayPoint = function DisplayPoint(point, envelope) {
 	    this.envelope = envelope;
 	    this.x = point.x;
 	    this.y = point.y;
@@ -7453,7 +7453,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                this.sortPoints();
 
 	                // Input display
-	                this.display = new displayPoint({ x: 0, y: 0 }, this);
+	                this.display = new DisplayPoint({
+	                    x: 0,
+	                    y: 0
+	                }, this);
 
 	                // Envelope curve
 	                this.line = svg.create("polyline");
@@ -7513,7 +7516,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	                this.points = [];
 	                this.nodes.forEach(function (node) {
-	                    _this.points.push({ x: node.x, y: node.y, p: node.p });
+	                    _this.points.push({
+	                        x: node.x,
+	                        y: node.y,
+	                        p: node.p
+	                    });
 	                });
 	            }
 	        },
@@ -7528,7 +7535,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var resolution = 5; // TODO: maybe it should be proportional with this.width
 	                var xMin = 0;
 	                var xMax = this.width;
-	                var range = xMax - xMin;
 	                for (var x = xMin; x < xMax; x += resolution) {
 	                    var xNorm = math.normalize(x, xMin, xMax);
 	                    var yNorm = this.scan(xNorm);
@@ -7551,9 +7557,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	                // fill xAxis
 	                //  TODO: move to buildInterface() so its only called onces
-	                var yCenter = "0 " + 0.5 * this.height + ", "; // x: 0, y: 0
-	                yCenter += this.width + " " + 0.5 * this.height; // x: 1, y: 0
-	                this.xAxis.setAttribute("points", yCenter);
+	                if (this.showXAxis) {
+	                    this.drawAxis();
+	                }
 	            }
 	        },
 	        click: {
@@ -7589,18 +7595,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (selected != null) {
 	                    this.selected = selected.index;
 	                    this.selectedType = selected.type;
-	                    var node = this.nodes[this.selected];
 	                    switch (this.selectedType) {
 	                        case "node":
 	                            // reset point
 	                            this.nodes[this.selected].move(null, 0.5);
 	                            this.nodes[this.selected].setCurve(1);
+	                            break;
 	                        case "line":
 	                            // Create new node
 	                            this.selectedType = "node";
 	                            var index = this.addPoint(this.mouse.x / this.width, 1 - this.mouse.y / this.height);
 	                            this.hasMoved = true;
 	                            this.selected = index;
+	                            break;
 	                    }
 	                } else {
 	                    // Todo: insert loop-point
@@ -7614,10 +7621,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        move: {
 	            value: function move() {
 	                if (this.clicked && this.selected != null) {
-	                    var _node = this.nodes[this.selected];
+	                    var node = this.nodes[this.selected];
 	                    this.mouse.x = math.clip(this.mouse.x, 0, this.width);
 	                    this.hasMoved = true;
-	                    var node = this.nodes[this.selected];
 
 	                    if (this.selectedType === "node") {
 	                        this.nodes[this.selected].move(this.mouse.x / this.width, 1 - this.mouse.y / this.height);
@@ -7625,7 +7631,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        this.interaction.update(this.mouse);
 
 	                        var p = this.interaction.value;
-	                        p = math.scale(p, 0, 1, _node.pMin, _node.pMax);
+	                        p = math.scale(p, 0, 1, node.pMin, node.pMax);
 	                        p = 1 / p;
 	                        this.nodes[this.selected].setCurve(p);
 	                    }
@@ -7649,9 +7655,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                }
 	                                this.nodes[this.selected].destroy();
 	                                console.log(this.selected);
+	                                break;
 	                            case "line":
 	                                // Reset curve
 	                                this.nodes[this.selected].setCurve(1);
+	                                break;
 	                        }
 	                    }
 
@@ -7665,23 +7673,35 @@ return /******/ (function(modules) { // webpackBootstrap
 	                }
 	            }
 	        },
+	        drawAxis: {
+	            value: function drawAxis() {
+	                var yCenter = "0 " + 0.5 * this.height + ", "; // x: 0, y: 0
+	                yCenter += this.width + " " + 0.5 * this.height; // x: 1, y: 0
+	                this.xAxis.setAttribute("points", yCenter);
+	            }
+	        },
 	        findNearestElement: {
 	            value: function findNearestElement() {
 
 	                var x = this.mouse.x / this.width;
 	                var y = 1 - this.mouse.y / this.height;
-	                var nodes = this.nodes;
 
 	                // Node
 	                var nearestNode = this.findNearestNode(x, y);
 	                if (nearestNode.dist < 0.05) {
-	                    return { index: nearestNode.index, type: "node" };
+	                    return {
+	                        index: nearestNode.index,
+	                        type: "node"
+	                    };
 	                }
 
 	                // Line segment
 	                var nearestLine = this.findNearestLine(x, y);
 	                if (nearestLine != null && nearestLine.dist < 0.1) {
-	                    return { index: nearestLine.index, type: "line" };
+	                    return {
+	                        index: nearestLine.index,
+	                        type: "line"
+	                    };
 	                }
 
 	                return null;
@@ -7706,7 +7726,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        before = x > nodes[i].x;
 	                    }
 	                }
-	                return { index: nearestIndex, dist: nearestDist };
+	                return {
+	                    index: nearestIndex,
+	                    dist: nearestDist
+	                };
 	            }
 	        },
 	        findNearestLine: {
@@ -7720,7 +7743,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (this.findNeighbors(x).clipped) {
 	                    return null;
 	                } else {
-	                    return { index: nearestIndex, dist: nearestDist };
+	                    return {
+	                        index: nearestIndex,
+	                        dist: nearestDist
+	                    };
 	                }
 	            }
 	        },
@@ -7755,7 +7781,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	                var priorPoint = this.nodes[priorIndex];
 	                var nextPoint = this.nodes[nextIndex];
-	                return { priorPoint: priorPoint, nextPoint: nextPoint, clipped: clipped };
+	                return {
+	                    priorPoint: priorPoint,
+	                    nextPoint: nextPoint,
+	                    clipped: clipped
+	                };
 	            }
 	        },
 	        scaleNode: {
