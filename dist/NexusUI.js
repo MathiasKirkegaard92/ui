@@ -7429,10 +7429,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        this.maxPoints = this.settings.maxPoints;
 
-	        this.showAxis = this.setting.showAxis;
-	        console.log("show axis = " + this.showAxis);
+	        this.showAxis = this.settings.showAxis;
 
 	        this.nodes = [];
+
+	        this.lineData = [];
 
 	        this.selected = false;
 
@@ -7509,7 +7510,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        },
 	        render: {
 	            value: function render() {
-	                //  this.nodes[this.selected].move( this.points )
 	                this.calculatePath();
 	            }
 	        },
@@ -7535,7 +7535,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                var data = "0 " + this.nodes[0].location.y + ", ";
 
 	                // loop through pixels along the width and call scan(x) on each
-	                var resolution = 5; // TODO: maybe it should be proportional with this.width
+	                var resolution = 1; // TODO: maybe it should be proportional with this.width
 	                var xMin = 0;
 	                var xMax = this.width;
 	                for (var x = xMin; x < xMax; x += resolution) {
@@ -7545,7 +7545,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    data += xy;
 	                }
 
-	                //  data += point.x*this.width+' '+ point.y*this.height+', ';
 	                data += this.width + " " + this.nodes[this.nodes.length - 1].location.y;
 
 	                this.line.setAttribute("points", data);
@@ -7559,7 +7558,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	                this.fill.setAttribute("points", data);
 
 	                // fill xAxis
-	                //  TODO: move to buildInterface() so its only called onces
 	                if (this.showAxis) {
 	                    this.drawAxis();
 	                }
